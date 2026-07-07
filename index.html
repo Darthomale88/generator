@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>YourWebBuild — Weekly Post Generator</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap');
+
+  :root{
+    --ink:#1B2430;
+    --ink-soft:#2A3646;
+    --paper:#F6F4EF;
+    --amber:#E8A33D;
+    --amber-dim:#C98A2E;
+    --slate:#5B6472;
+    --moss:#4C7A5E;
+    --rust:#C05746;
+    --line: rgba(255,255,255,0.09);
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--ink);
+    color:var(--paper);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+  }
+
+  .wrap{max-width:760px;margin:0 auto;padding:32px 20px 80px;}
+
+  header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    border-bottom:1px solid var(--line);
+    padding-bottom:20px;
+    margin-bottom:28px;
+    flex-wrap:wrap;
+    gap:12px;
+  }
+  .brand{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    color:var(--amber);
+  }
+  h1{
+    font-size:26px;
+    margin:6px 0 0;
+    font-weight:700;
+    letter-spacing:-0.01em;
+  }
+  .weekbox{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    text-align:right;
+    color:var(--slate);
+    line-height:1.6;
+  }
+  .weekbox b{color:var(--paper);}
+
+  .panel{
+    background:var(--ink-soft);
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:22px;
+    margin-bottom:20px;
+  }
+
+  .panel-label{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--slate);
+    margin-bottom:14px;
+  }
+
+  .toggle-row{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+  .toggle-btn{
+    flex:1;
+    min-width:140px;
+    padding:12px 14px;
+    border-radius:5px;
+    border:1px solid var(--line);
+    background:transparent;
+    color:var(--paper);
+    font-family:'Inter',sans-serif;
+    font-size:14px;
+    font-weight:500;
+    cursor:pointer;
+    transition:all .15s ease;
+  }
+  .toggle-btn.active{
+    background:var(--amber);
+    border-color:var(--amber);
+    color:var(--ink);
+    font-weight:600;
+  }
+  .toggle-btn:hover:not(.active){border-color:var(--amber-dim);}
+
+  select{
+    width:100%;
+    padding:12px 14px;
+    border-radius:5px;
+    border:1px solid var(--line);
+    background:var(--ink);
+    color:var(--paper);
+    font-family:'Inter',sans-serif;
+    font-size:14px;
+    margin-bottom:16px;
+  }
+
+  .generate-btn{
+    width:100%;
+    padding:14px;
+    border-radius:5px;
+    border:none;
+    background:var(--amber);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    font-weight:700;
+    font-size:15px;
+    cursor:pointer;
+    transition:background .15s ease;
+  }
+  .generate-btn:hover{background:var(--amber-dim);}
+  .generate-btn:disabled{opacity:0.5;cursor:not-allowed;}
+
+  .card{
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:18px;
+    margin-bottom:14px;
+    background:var(--ink);
+  }
+  .card-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:10px;
+  }
+  .platform-tag{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--amber);
+    border:1px solid var(--amber);
+    border-radius:3px;
+    padding:3px 8px;
+  }
+  .card-actions{display:flex;gap:8px;}
+  .icon-btn{
+    background:none;
+    border:1px solid var(--line);
+    color:var(--slate);
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    padding:5px 10px;
+    border-radius:4px;
+    cursor:pointer;
+  }
+  .icon-btn:hover{color:var(--paper);border-color:var(--slate);}
+  .icon-btn.posted{color:var(--moss);border-color:var(--moss);}
+
+  .card-body{
+    font-size:14.5px;
+    line-height:1.65;
+    white-space:pre-wrap;
+  }
+
+  .history{margin-top:32px;}
+  .history-item{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:10px 0;
+    border-bottom:1px solid var(--line);
+    font-size:13px;
+  }
+  .history-item:last-child{border-bottom:none;}
+  .history-week{font-family:'IBM Plex Mono',monospace;color:var(--slate);}
+  .history-dots{display:flex;gap:6px;}
+  .dot{
+    width:8px;height:8px;border-radius:50%;
+    background:var(--slate);
+  }
+  .dot.done{background:var(--moss);}
+
+  .empty{color:var(--slate);font-size:13px;text-align:center;padding:20px 0;}
+  .loading{color:var(--amber);font-size:13px;font-family:'IBM Plex Mono',monospace;}
+  .error{color:var(--rust);font-size:13px;}
+  .subtle{color:var(--slate);font-size:12.5px;margin-top:-6px;margin-bottom:16px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <div class="brand">YourWebBuild</div>
+      <h1>Weekly Post Generator</h1>
+    </div>
+    <div class="weekbox" id="weekbox">—</div>
+  </header>
+
+  <div class="panel">
+    <div class="panel-label">This week's angle</div>
+    <div class="toggle-row">
+      <button class="toggle-btn active" data-angle="portfolio" id="btn-portfolio">Portfolio spotlight</button>
+      <button class="toggle-btn" data-angle="brand" id="btn-brand">Brand awareness</button>
+    </div>
+
+    <div id="client-picker">
+      <div class="panel-label">Client to feature</div>
+      <select id="client-select">
+        <option value="Victory Tabernacle Apostolic Faith Church">Victory Tabernacle Apostolic Faith Church — 15-page church site, burgundy &amp; gold</option>
+        <option value="Naptown Barber">Naptown Barber — dark luxury barbershop site, brass &amp; gold</option>
+        <option value="Clean House Power Washing">Clean House Power Washing — service site</option>
+      </select>
+      <div class="subtle">Rotates automatically each portfolio week, or pick one manually.</div>
+    </div>
+
+    <button class="generate-btn" id="generate-btn">Generate this week's posts</button>
+  </div>
+
+  <div id="results"></div>
+
+  <div class="panel history">
+    <div class="panel-label">Recent weeks</div>
+    <div id="history-list"><div class="empty">No posts generated yet.</div></div>
+  </div>
+
+</div>
+
+<script>
+const CLIENTS = ["Victory Tabernacle Apostolic Faith Church", "Naptown Barber", "Clean House Power Washing"];
+const PLATFORMS = ["Facebook", "Instagram", "Nextdoor"];
+
+let state = { angle: "portfolio", history: [] };
+
+function isoWeek(d){
+  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const dayNum = date.getUTCDay() || 7;
+  date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(),0,1));
+  return Math.ceil((((date - yearStart) / 86400000) + 1)/7);
+}
+
+function currentWeekKey(){
+  const d = new Date();
+  return d.getUTCFullYear() + "-W" + String(isoWeek(d)).padStart(2,"0");
+}
+
+function nextMonday(){
+  const d = new Date();
+  const day = d.getDay();
+  const diff = (8 - day) % 7 || 7;
+  const nd = new Date(d);
+  nd.setDate(d.getDate() + diff);
+  return nd.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+}
+
+async function loadHistory(){
+  try{
+    const res = await window.storage.get('ywb-post-history', false);
+    state.history = res && res.value ? JSON.parse(res.value) : [];
+  }catch(e){
+    state.history = [];
+  }
+  renderHistory();
+}
+
+async function saveHistory(){
+  try{
+    await window.storage.set('ywb-post-history', JSON.stringify(state.history), false);
+  }catch(e){
+    console.error('save failed', e);
+  }
+}
+
+function renderWeekbox(){
+  document.getElementById('weekbox').innerHTML =
+    `Week of ${new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'})}<br><b>Next reminder: ${nextMonday()}</b>`;
+}
+
+function pickRotatingClient(){
+  const used = state.history.filter(h => h.angle === 'portfolio').map(h => h.client);
+  const lastUsed = used.length ? used[used.length-1] : null;
+  const idx = CLIENTS.indexOf(lastUsed);
+  return CLIENTS[(idx+1) % CLIENTS.length];
+}
+
+function setAngle(angle){
+  state.angle = angle;
+  document.getElementById('btn-portfolio').classList.toggle('active', angle==='portfolio');
+  document.getElementById('btn-brand').classList.toggle('active', angle==='brand');
+  document.getElementById('client-picker').style.display = angle==='portfolio' ? 'block' : 'none';
+  if(angle==='portfolio'){
+    document.getElementById('client-select').value = pickRotatingClient();
+  }
+}
+
+function buildPrompt(angle, client){
+  const base = `You are writing weekly local-marketing posts for YourWebBuild, a solo web design and maintenance agency in Indianapolis, IN that builds hand-coded, fast, professional websites for local service businesses (barbershops, churches, cleaning companies, contractors). The owner is a one-person shop, friendly and direct, not corporate. Contact: hello@yourwebbuild.com, (317) 731-2108, site yourwebbuild.com. Care plans start at $49/month.`;
+
+  const angleBrief = angle === 'portfolio'
+    ? `This week's angle is a PORTFOLIO SPOTLIGHT featuring the completed client project: ${client}. Reference real, specific details of that build style (do not invent stats or reviews, describe design work only).`
+    : `This week's angle is BRAND AWARENESS for YourWebBuild generally — no specific client, focused on why a local Indianapolis service business needs a real website (not just social media), with a light call to action.`;
+
+  return `${base}\n${angleBrief}\n\nWrite three separate post variants, one per platform, each in its own tone:\n1. FACEBOOK — warm, conversational, 3-5 sentences, can include a soft CTA to message the page or visit the site.\n2. INSTAGRAM — punchier, shorter, visual-first caption under 60 words, end with 3-5 relevant hashtags.\n3. NEXTDOOR — neighborly and low-pressure, written like a genuine post to neighbors, no hard sell, mention being Indianapolis-based, 2-4 sentences.\n\nRespond ONLY in this exact format with no preamble:\n===FACEBOOK===\n<text>\n===INSTAGRAM===\n<text>\n===NEXTDOOR===\n<text>`;
+}
+
+function parseResponse(text){
+  const out = {};
+  const parts = text.split(/===(FACEBOOK|INSTAGRAM|NEXTDOOR)===/i);
+  for(let i=1;i<parts.length;i+=2){
+    out[parts[i].toUpperCase()] = parts[i+1].trim();
+  }
+  return out;
+}
+
+async function generate(){
+  const btn = document.getElementById('generate-btn');
+  const resultsEl = document.getElementById('results');
+  btn.disabled = true;
+  btn.textContent = 'Generating…';
+  resultsEl.innerHTML = '<div class="loading">Writing this week\\'s posts…</div>';
+
+  const angle = state.angle;
+  const client = angle === 'portfolio' ? document.getElementById('client-select').value : null;
+  const prompt = buildPrompt(angle, client);
+
+  try{
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 1000,
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+    const data = await response.json();
+    const textBlock = (data.content || []).find(c => c.type === 'text');
+    const parsed = parseResponse(textBlock ? textBlock.text : '');
+
+    const entry = {
+      weekKey: currentWeekKey(),
+      date: new Date().toISOString(),
+      angle,
+      client,
+      posts: parsed,
+      posted: { FACEBOOK:false, INSTAGRAM:false, NEXTDOOR:false }
+    };
+    state.history = state.history.filter(h => h.weekKey !== entry.weekKey);
+    state.history.push(entry);
+    if(state.history.length > 12) state.history = state.history.slice(-12);
+    await saveHistory();
+
+    renderResults(entry);
+    renderHistory();
+  }catch(e){
+    resultsEl.innerHTML = `<div class="error">Couldn't generate posts right now. Try again in a moment.</div>`;
+    console.error(e);
+  }finally{
+    btn.disabled = false;
+    btn.textContent = "Generate this week's posts";
+  }
+}
+
+function renderResults(entry){
+  const resultsEl = document.getElementById('results');
+  resultsEl.innerHTML = '';
+  PLATFORMS.forEach(p => {
+    const key = p.toUpperCase();
+    const text = entry.posts[key] || '(no content returned)';
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="card-head">
+        <span class="platform-tag">${p}</span>
+        <div class="card-actions">
+          <button class="icon-btn copy-btn">Copy</button>
+          <button class="icon-btn post-btn ${entry.posted[key] ? 'posted' : ''}">${entry.posted[key] ? '✓ Posted' : 'Mark posted'}</button>
+        </div>
+      </div>
+      <div class="card-body">${text}</div>
+    `;
+    card.querySelector('.copy-btn').onclick = () => {
+      navigator.clipboard.writeText(text);
+      const b = card.querySelector('.copy-btn');
+      b.textContent = 'Copied';
+      setTimeout(()=> b.textContent='Copy', 1500);
+    };
+    card.querySelector('.post-btn').onclick = async () => {
+      entry.posted[key] = !entry.posted[key];
+      const idx = state.history.findIndex(h => h.weekKey === entry.weekKey);
+      if(idx>-1) state.history[idx] = entry;
+      await saveHistory();
+      renderResults(entry);
+      renderHistory();
+    };
+    resultsEl.appendChild(card);
+  });
+}
+
+function renderHistory(){
+  const el = document.getElementById('history-list');
+  if(!state.history.length){
+    el.innerHTML = '<div class="empty">No posts generated yet.</div>';
+    return;
+  }
+  const recent = [...state.history].reverse().slice(0,8);
+  el.innerHTML = '';
+  recent.forEach(h => {
+    const label = h.angle === 'portfolio' ? h.client : 'Brand awareness';
+    const row = document.createElement('div');
+    row.className = 'history-item';
+    row.innerHTML = `
+      <span>${h.weekKey} — ${label}</span>
+      <span class="history-dots">
+        ${PLATFORMS.map(p => `<span class="dot ${h.posted && h.posted[p.toUpperCase()] ? 'done' : ''}" title="${p}"></span>`).join('')}
+      </span>
+    `;
+    el.appendChild(row);
+  });
+}
+
+document.getElementById('btn-portfolio').onclick = () => setAngle('portfolio');
+document.getElementById('btn-brand').onclick = () => setAngle('brand');
+document.getElementById('generate-btn').onclick = generate;
+
+renderWeekbox();
+setAngle('portfolio');
+loadHistory();
+</script>
+</body>
+</html>
